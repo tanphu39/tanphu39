@@ -1,0 +1,98 @@
+<html>
+    <head>
+        <style>
+            body {
+                text-align: center;
+                margin: auto;
+                width: 640px; 
+                padding: 50px;
+                font-family: 'Lexend Deca', sans-serif; 
+                background-color: #2E475D;
+            }
+            #wishing-well {
+                position: relative;
+                width: 400px;
+                height: 300px;
+                margin: 50px;
+                outline: solid 5px black;
+            }
+            div.btn {
+                display: inline-block;
+                border: 3px solid black;
+                background-color: red;
+                border-radius: 25%;
+                margin-right: 5px;
+                padding: 5px 30px;
+                cursor: pointer;
+            }
+            div.btn.on {
+                background-color: green;
+                color: white;
+            }
+        </style>
+        <script>
+            const webSocket = new WebSocket('ws://localhost:443/');
+            let clientItemStatus = ['Off', 'Off', 'Off', 'Off'];
+
+            window.onload = function() {
+                let button = document.getElementsByClassName('btn');
+                for(let i = 0; i < button.length; i++) {
+                    let btn = button[i];
+                    btn.onclick = function(e) {
+                        if (e.target.classList.contains('on')) {
+                            e.target.classList.remove('on');
+                            e.target.innerHTML = 'Off';
+                        } else {
+                            e.target.classList.add('on');
+                            e.target.innerHTML = 'On';
+                        }
+                        clientItemStatus[i] = btn.innerHTML;
+                        const data = {'type': 'status', 'status': clientItemStatus};
+                        webSocket.send(JSON.stringify(data));
+                        //console.log(JSON.stringify(data));
+                    }
+                }
+            }
+
+            function arrayToButtonConvert(status) {
+                let button = document.getElementsByClassName('btn');
+                for(let i = 0; i < status.length; i++) {
+                    button[i].innerHTML = status[i];
+                    if (status[i] == 'On' && !button[i].classList.contains('on')) {
+                        button[i].classList.add('on');
+                    } else if (status[i] == 'Off' && button[i].classList.contains('on')) {
+                        button[i].classList.remove('on');
+                    }
+                }
+            }
+
+            webSocket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type == 'status') {
+                    clientItemStatus = data.status;
+                    //console.log(data.status);
+                    //console.log(clientItemStatus);
+                    arrayToButtonConvert(data.status);
+                }
+            };
+        
+
+        </script>
+    </head>
+    <body>
+        <h1 id="title">Phus Smart Home</h1>
+        <!-- <p id="time"></p>
+        <div id="wishing-well"></div> -->
+        <div class="button-row">
+            <input type="hidden" id="wishing-well-message">
+            <h2>Living room</h2>
+            <div class="btn"></div>
+            <h2>Bedroom</h2>
+            <div class="btn"></div>
+            <h2>Kitchen</h2>
+            <div class="btn"></div>
+            <h2>Fan</h2>
+            <div class="btn"></div>
+        </div>
+    </body>
+</html>
